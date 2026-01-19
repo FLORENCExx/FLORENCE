@@ -1,9 +1,380 @@
-<html>
- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Frame Generator - Photography Reference</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        select, button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        #mangaCanvas {
+            width: 100%;
+            height: auto;
+            border: 3px solid #333;
+            background: white;
+        }
+
+        .info {
+            margin-top: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
 <body>
-  <h1>Tay</h1>
-  <p>Welcome to my website!</p>
-  <img src="https://content.codecademy.com/articles/github-pages-via-web-app/happy-ice-cream.gif" />
+    <div class="header">
+        <h1>📸 Manga Frame Generator</h1>
+        <p class="subtitle">Random panel layouts for photography composition reference</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="layoutStyle">Layout Style:</label>
+            <select id="layoutStyle">
+                <option value="random">Random</option>
+                <option value="grid">Classic Grid</option>
+                <option value="dynamic">Dynamic</option>
+                <option value="focus">Single Focus</option>
+                <option value="vertical">Vertical Split</option>
+                <option value="horizontal">Horizontal Split</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="panelCount">Panel Count:</label>
+            <select id="panelCount">
+                <option value="random">Random (2-6)</option>
+                <option value="2">2 Panels</option>
+                <option value="3">3 Panels</option>
+                <option value="4">4 Panels</option>
+                <option value="5">5 Panels</option>
+                <option value="6">6 Panels</option>
+            </select>
+        </div>
+
+        <button id="generateBtn">🎲 Generate New Layout</button>
+        <button id="downloadBtn">💾 Download Image</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="mangaCanvas" width="800" height="1000"></canvas>
+    </div>
+
+    <div class="info">
+        <h3>How to Use:</h3>
+        <p>
+            Click "Generate New Layout" to create random manga panel compositions.
+            Use these layouts as reference for photography composition, framing multiple subjects,
+            or creating dynamic photo collages. Each panel represents a different shot or perspective.
+            Download the layout to reference while shooting!
+        </p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mangaCanvas');
+        const ctx = canvas.getContext('2d');
+        const layoutStyleSelect = document.getElementById('layoutStyle');
+        const panelCountSelect = document.getElementById('panelCount');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Panel layout templates
+        const layouts = {
+            grid2: [
+                {x: 0, y: 0, w: 0.5, h: 1},
+                {x: 0.5, y: 0, w: 0.5, h: 1}
+            ],
+            grid3_vertical: [
+                {x: 0, y: 0, w: 0.33, h: 1},
+                {x: 0.33, y: 0, w: 0.34, h: 1},
+                {x: 0.67, y: 0, w: 0.33, h: 1}
+            ],
+            grid3_horizontal: [
+                {x: 0, y: 0, w: 1, h: 0.33},
+                {x: 0, y: 0.33, w: 1, h: 0.34},
+                {x: 0, y: 0.67, w: 1, h: 0.33}
+            ],
+            grid3_L: [
+                {x: 0, y: 0, w: 0.6, h: 1},
+                {x: 0.6, y: 0, w: 0.4, h: 0.5},
+                {x: 0.6, y: 0.5, w: 0.4, h: 0.5}
+            ],
+            grid4: [
+                {x: 0, y: 0, w: 0.5, h: 0.5},
+                {x: 0.5, y: 0, w: 0.5, h: 0.5},
+                {x: 0, y: 0.5, w: 0.5, h: 0.5},
+                {x: 0.5, y: 0.5, w: 0.5, h: 0.5}
+            ],
+            grid4_wide: [
+                {x: 0, y: 0, w: 1, h: 0.4},
+                {x: 0, y: 0.4, w: 0.33, h: 0.3},
+                {x: 0.33, y: 0.4, w: 0.34, h: 0.3},
+                {x: 0.67, y: 0.4, w: 0.33, h: 0.3},
+                {x: 0, y: 0.7, w: 1, h: 0.3}
+            ],
+            grid5_pyramid: [
+                {x: 0, y: 0, w: 1, h: 0.35},
+                {x: 0, y: 0.35, w: 0.5, h: 0.3},
+                {x: 0.5, y: 0.35, w: 0.5, h: 0.3},
+                {x: 0, y: 0.65, w: 0.33, h: 0.35},
+                {x: 0.33, y: 0.65, w: 0.34, h: 0.35},
+                {x: 0.67, y: 0.65, w: 0.33, h: 0.35}
+            ],
+            focus_left: [
+                {x: 0, y: 0, w: 0.65, h: 1},
+                {x: 0.65, y: 0, w: 0.35, h: 0.33},
+                {x: 0.65, y: 0.33, w: 0.35, h: 0.34},
+                {x: 0.65, y: 0.67, w: 0.35, h: 0.33}
+            ],
+            focus_right: [
+                {x: 0, y: 0, w: 0.35, h: 0.33},
+                {x: 0, y: 0.33, w: 0.35, h: 0.34},
+                {x: 0, y: 0.67, w: 0.35, h: 0.33},
+                {x: 0.35, y: 0, w: 0.65, h: 1}
+            ],
+            focus_top: [
+                {x: 0, y: 0, w: 1, h: 0.6},
+                {x: 0, y: 0.6, w: 0.33, h: 0.4},
+                {x: 0.33, y: 0.6, w: 0.34, h: 0.4},
+                {x: 0.67, y: 0.6, w: 0.33, h: 0.4}
+            ],
+            dynamic1: [
+                {x: 0, y: 0, w: 0.4, h: 0.4},
+                {x: 0.4, y: 0, w: 0.6, h: 0.6},
+                {x: 0, y: 0.4, w: 0.4, h: 0.6},
+                {x: 0.4, y: 0.6, w: 0.3, h: 0.4},
+                {x: 0.7, y: 0.6, w: 0.3, h: 0.4}
+            ],
+            dynamic2: [
+                {x: 0, y: 0, w: 0.5, h: 0.35},
+                {x: 0.5, y: 0, w: 0.5, h: 0.5},
+                {x: 0, y: 0.35, w: 0.3, h: 0.35},
+                {x: 0.3, y: 0.35, w: 0.2, h: 0.65},
+                {x: 0.5, y: 0.5, w: 0.5, h: 0.5}
+            ],
+            vertical_split: [
+                {x: 0, y: 0, w: 0.5, h: 0.5},
+                {x: 0.5, y: 0, w: 0.5, h: 1},
+                {x: 0, y: 0.5, w: 0.5, h: 0.5}
+            ],
+            horizontal_split: [
+                {x: 0, y: 0, w: 1, h: 0.5},
+                {x: 0, y: 0.5, w: 0.5, h: 0.5},
+                {x: 0.5, y: 0.5, w: 0.5, h: 0.5}
+            ]
+        };
+
+        function drawPanel(panel, index) {
+            const padding = 10;
+            const x = panel.x * canvas.width + padding;
+            const y = panel.y * canvas.height + padding;
+            const w = panel.w * canvas.width - padding * 2;
+            const h = panel.h * canvas.height - padding * 2;
+
+            // Draw panel background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y, w, h);
+
+            // Draw panel border
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x, y, w, h);
+
+            // Draw panel number
+            ctx.fillStyle = '#667eea';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(index + 1, x + w/2, y + h/2);
+
+            // Draw subtle guide lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+
+            // Rule of thirds
+            ctx.beginPath();
+            ctx.moveTo(x + w/3, y);
+            ctx.lineTo(x + w/3, y + h);
+            ctx.moveTo(x + 2*w/3, y);
+            ctx.lineTo(x + 2*w/3, y + h);
+            ctx.moveTo(x, y + h/3);
+            ctx.lineTo(x + w, y + h/3);
+            ctx.moveTo(x, y + 2*h/3);
+            ctx.lineTo(x + w, y + 2*h/3);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+        }
+
+        function generateLayout() {
+            // Clear canvas
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const style = layoutStyleSelect.value;
+            const count = panelCountSelect.value;
+            let selectedLayout;
+
+            if (style === 'random') {
+                // Pick random layout
+                const layoutKeys = Object.keys(layouts);
+                const randomKey = layoutKeys[Math.floor(Math.random() * layoutKeys.length)];
+                selectedLayout = layouts[randomKey];
+            } else if (style === 'grid') {
+                const gridLayouts = ['grid2', 'grid3_vertical', 'grid3_horizontal', 'grid3_L', 'grid4'];
+                const randomGrid = gridLayouts[Math.floor(Math.random() * gridLayouts.length)];
+                selectedLayout = layouts[randomGrid];
+            } else if (style === 'dynamic') {
+                const dynamicLayouts = ['dynamic1', 'dynamic2', 'grid4_wide', 'grid5_pyramid'];
+                const randomDynamic = dynamicLayouts[Math.floor(Math.random() * dynamicLayouts.length)];
+                selectedLayout = layouts[randomDynamic];
+            } else if (style === 'focus') {
+                const focusLayouts = ['focus_left', 'focus_right', 'focus_top'];
+                const randomFocus = focusLayouts[Math.floor(Math.random() * focusLayouts.length)];
+                selectedLayout = layouts[randomFocus];
+            } else if (style === 'vertical') {
+                selectedLayout = layouts.vertical_split;
+            } else if (style === 'horizontal') {
+                selectedLayout = layouts.horizontal_split;
+            }
+
+            // Filter by panel count if specified
+            if (count !== 'random') {
+                const targetCount = parseInt(count);
+                const matchingLayouts = Object.values(layouts).filter(l => l.length === targetCount);
+                if (matchingLayouts.length > 0) {
+                    selectedLayout = matchingLayouts[Math.floor(Math.random() * matchingLayouts.length)];
+                }
+            }
+
+            // Draw the layout
+            selectedLayout.forEach((panel, index) => {
+                drawPanel(panel, index);
+            });
+        }
+
+        function downloadCanvas() {
+            const link = document.createElement('a');
+            link.download = 'manga-frame-reference.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        generateBtn.addEventListener('click', generateLayout);
+        downloadBtn.addEventListener('click', downloadCanvas);
+
+        // Generate initial layout
+        generateLayout();
+    </script>
 </body>
- 
 </html>
